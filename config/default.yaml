@@ -40,12 +40,26 @@ bands:
 scaling:
   smoothing_s: 3.0            # time constant of the exponential moving average
 
+# Where the values are published. Servers listen on 127.0.0.1 (this computer only); use 0.0.0.0
+# to accept connections from other devices on the network. Port 0 picks any free port.
 outputs:
-  rate_hz: 4.0
+  rate_hz: 4.0                # values per second, on every output except ThinkGear (always 1)
   lsl:
+    enabled: true
     name: NeuroState
     type: BrainState
-  thinkgear:
+  json_tcp:                   # one JSON object per line
+    enabled: true
+    host: 127.0.0.1
+    port: 13855
+  websocket:                  # one JSON object per message
+    enabled: true
+    host: 127.0.0.1
+    port: 13856
+    allowed_origins: null     # web page origins allowed to connect, e.g. [http://localhost:5173];
+                              # null lets any page you open read the values
+  thinkgear:                  # for apps written for NeuroSky MindWave headsets
+    enabled: true
     host: 127.0.0.1
     port: 13854
 

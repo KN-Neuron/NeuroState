@@ -4,8 +4,9 @@ A standalone service that reads EEG from any LSL (Lab Streaming Layer) stream an
 user's attention and relaxation levels in real time. See [Plan.md](Plan.md) for the design and
 milestones.
 
-**Status:** milestone M1 (getting data in), in progress. `neurostate mock` and
-`neurostate check` work; the other commands are placeholders.
+**Status:** milestones M1 (getting data in) and M2 (outputs) are in progress. `neurostate mock`
+and `neurostate check` work, and `neurostate run --fake` publishes made-up values on every
+output so apps can be built before the EEG pipeline exists.
 
 ## Setup
 
@@ -28,6 +29,18 @@ uv run neurostate mock --channels Fp1,Fp2,O1,O2 --line-noise 5
 uv run neurostate mock --drops 20               # lose a chunk of samples 20 times a minute
 uv run neurostate --config my.yaml mock         # settings from a config file
 ```
+
+### Publishing values to apps
+
+```sh
+uv run neurostate run --fake              # made-up values: slow waves in attention and relaxation
+uv run neurostate run --fake --dropouts   # each minute ends with poor signal, then no signal
+```
+
+Apps can receive the values over LSL, JSON over TCP or WebSocket, or the ThinkGear protocol
+that NeuroSky MindWave apps use, all at once. [docs/outputs.md](docs/outputs.md) describes the
+values and each output; [examples/](examples/) has working clients in Python, C# (including
+Unity) and JavaScript.
 
 ### Checking the signal
 

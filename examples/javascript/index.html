@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>neurostate client</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --text: #1f2328;
+      --muted: #656d76;
+      --track: #e6e8eb;
+      --attention: #3b6fd4;
+      --relaxation: #2f9e72;
+      --held: #a0a7b0;
+      --background: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #e6e8eb;
+        --muted: #9aa3ad;
+        --track: #30363d;
+        --attention: #6f9cf0;
+        --relaxation: #4fc497;
+        --held: #5c646d;
+        --background: #161b22;
+      }
+    }
+    body {
+      margin: 0 auto;
+      max-width: 32rem;
+      padding: 2rem 1rem;
+      font: 16px/1.5 system-ui, sans-serif;
+      color: var(--text);
+      background: var(--background);
+    }
+    h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+    #status { color: var(--muted); margin: 0 0 1.5rem; }
+    .meter { margin-bottom: 1.25rem; }
+    .meter header { display: flex; justify-content: space-between; margin-bottom: 0.3rem; }
+    .value { font-variant-numeric: tabular-nums; }
+    .track { height: 1rem; border-radius: 0.5rem; background: var(--track); overflow: hidden; }
+    .fill { height: 100%; width: 50%; border-radius: inherit; transition: width 0.25s linear; }
+    #attention .fill { background: var(--attention); }
+    #relaxation .fill { background: var(--relaxation); }
+    .held .fill { background: var(--held) !important; }
+  </style>
+</head>
+<body>
+  <h1>neurostate</h1>
+  <p id="status">Connecting…</p>
+
+  <section class="meter" id="attention">
+    <header><span>Attention</span><span class="value">–</span></header>
+    <div class="track"><div class="fill"></div></div>
+  </section>
+  <section class="meter" id="relaxation">
+    <header><span>Relaxation</span><span class="value">–</span></header>
+    <div class="track"><div class="fill"></div></div>
+  </section>
+
+  <script>
+    // Minimal browser client for the neurostate WebSocket output.
+    // Start the service first (uv run neurostate run --fake), then open this file.
+    const URL = "ws://127.0.0.1:13856";
+    const NEUTRAL = 50;          // shown whenever the values can't be trusted
+    const STALE_AFTER_MS = 2000; // no message for this long counts as no signal
+    const RETRY_MS = 2000;
+
+    const statusLine = document.getElementById("status");
+    let lastMessageAt = 0;
+
+    function showMeter(id, value, trusted) {
+      const meter = document.getElementById(id);
+      meter.classList.toggle("held", !trusted);
+      meter.querySelector(".fill").style.width = `${value}%`;
+      meter.querySelector(".value").textContent = trusted ? value.toFixed(0) : "–";
+    }
+
+    function showNeutral(message) {
+      showMeter("attention", NEUTRAL, false);
+      showMeter("relaxation", NEUTRAL, false);
+      statusLine.textContent = message;
+    }
+
+    function connect() {
+      const socket = new WebSocket(URL);
+      socket.onmessage = (event) => {
+        const values = JSON.parse(event.data);
+        lastMessageAt = Date.now();
+        // Use the values only when the state is "ok"; otherwise fall back to a neutral default.
+        const ok = values.state === "ok";
+        showMeter("attention", ok ? values.attention : NEUTRAL, ok);
+        showMeter("relaxation", ok ? values.relaxation : NEUTRAL, ok);
+        statusLine.textContent = `State: ${values.state} · signal quality ${Math.round(values.quality)}`;
+      };
+      // The service may start after this page, or restart: keep trying.
+      socket.onclose = () => {
+        lastMessageAt = 0;
+        showNeutral(`Not connected to ${URL}. Retrying…`);
+        setTimeout(connect, RETRY_MS);
+      };
+    }
+
+    // Connected but silent counts as no signal too.
+    setInterval(() => {
+      if (lastMessageAt && Date.now() - lastMessageAt > STALE_AFTER_MS) {
+        showNeutral("No values for a while. Is the service still running?");
+      }
+    }, 500);
+
+    connect();
+  </script>
+</body>
+</html>

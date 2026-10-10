@@ -17,7 +17,7 @@ def test_help_lists_all_commands():
         assert command in result.output
 
 
-@pytest.mark.parametrize("command", ["calibrate", "run", "record", "replay"])
+@pytest.mark.parametrize("command", ["calibrate", "record", "replay"])
 def test_unimplemented_commands_say_so(command):
     result = runner.invoke(app, [command])
 
@@ -106,3 +106,10 @@ def test_check_describes_the_stream_and_reports_reception(start_mock, monkeypatc
     assert "Parietal (Standard 10-20): no channels" in result.output
     assert "Occipital (Standard 10-20): O1 O2" in result.output
     assert "No gaps: no samples were lost." in result.output
+
+
+def test_run_needs_fake_until_the_pipeline_exists():
+    result = runner.invoke(app, ["run"])
+
+    assert result.exit_code == 1
+    assert "--fake" in result.output

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Run on whatever newer .NET is installed. -->
+    <RollForward>Major</RollForward>
+    <!-- C# 8 is what Unity 2020.3 understands, so NeuroStateClient.cs works there unchanged. -->
+    <LangVersion>8.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <!-- The official C# binding for LSL (LSL.cs, MIT licence), pinned to a commit. -->
+    <LslBindingCommit>520c23c18e7803a613b303dfbea13dbdb46b7e30</LslBindingCommit>
+    <LslBindingDir>$(BaseIntermediateOutputPath)lsl/</LslBindingDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The native liblsl library, for every platform. -->
+    <PackageReference Include="SharpLSL.Native.all" Version="1.17.6" />
+    <Compile Include="$(LslBindingDir)LSL.cs" />
+    <!-- Unity-only; see README.md. -->
+    <Compile Remove="Unity/**" />
+  </ItemGroup>
+
+  <Target Name="DownloadLslBinding" BeforeTargets="CoreCompile" Condition="!Exists('$(LslBindingDir)LSL.cs')">
+    <DownloadFile
+      SourceUrl="https://raw.githubusercontent.com/labstreaminglayer/liblsl-Csharp/$(LslBindingCommit)/LSL.cs"
+      DestinationFolder="$(LslBindingDir)" />
+  </Target>
+
+</Project>

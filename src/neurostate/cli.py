@@ -12,6 +12,7 @@ from neurostate.montage import REGIONS, Montage, load_montage
 
 if TYPE_CHECKING:
     from neurostate.acquisition.lsl_source import LslSource
+    from neurostate.outputs import Output
 
 app = typer.Typer(
     help="Real-time attention and relaxation levels from any LSL EEG stream.",
@@ -154,9 +155,43 @@ def calibrate() -> None:
 
 
 @app.command()
-def run() -> None:
-    """Run the service: read EEG and publish attention and relaxation levels."""
-    _not_implemented("M2")
+def run(
+    ctx: typer.Context,
+    fake: Annotated[
+        bool, typer.Option("--fake", help="Publish made-up values (slow waves) instead of EEG.")
+    ] = False,
+    dropouts: Annotated[
+        bool,
+        typer.Option(
+            "--dropouts", help="With --fake, end each minute with poor signal, then no signal."
+        ),
+    ] = False,
+) -> None:
+    """Run the service: read EEG and publish attention and relaxation levels.
+
+    Runs until Ctrl+C.
+    """
+    if not fake:
+        _fail("Only --fake works for now: the EEG pipeline is planned for milestone M4.", code=1)
+    config: Config = ctx.obj
+
+    import asyncio
+
+    from neurostate.estimators.fake import FakeStates
+    from neurostate.pipeline import OutputStartError, run_service
+
+    def show(outputs: list["Output"]) -> None:
+        typer.echo(f"Publishing made-up values {config.outputs.rate_hz:g} times a second on:")
+        for output in outputs:
+            typer.echo(f"  {output.description}")
+        typer.echo("Press Ctrl+C to stop.")
+
+    try:
+        asyncio.run(run_service(config.outputs, FakeStates(dropouts), on_started=show))
+    except OutputStartError as error:
+        _fail(str(error), code=1)
+    except KeyboardInterrupt:
+        typer.echo("Stopped.")
 
 
 @app.command()

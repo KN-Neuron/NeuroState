@@ -18,6 +18,15 @@ jobs:
       - run: uv run ruff check
       - run: uv run ruff format --check
 
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet build examples/csharp
+
   test:
     strategy:
       fail-fast: false

@@ -95,18 +95,38 @@ class ScalingConfig(_Section):
 
 
 class LslOutletConfig(_Section):
+    enabled: bool = True
     name: str = "NeuroState"
     type: str = "BrainState"
 
 
-class ThinkGearConfig(_Section):
+Port = Annotated[int, Field(ge=0, le=65535)]  # 0 picks any free port
+
+
+class JsonTcpConfig(_Section):
+    enabled: bool = True
     host: str = "127.0.0.1"
-    port: int = Field(13854, ge=1, le=65535)
+    port: Port = 13855
+
+
+class WebSocketConfig(_Section):
+    enabled: bool = True
+    host: str = "127.0.0.1"
+    port: Port = 13856
+    allowed_origins: list[str] | None = None
+
+
+class ThinkGearConfig(_Section):
+    enabled: bool = True
+    host: str = "127.0.0.1"
+    port: Port = 13854
 
 
 class OutputsConfig(_Section):
     rate_hz: PositiveFloat = 4.0
     lsl: LslOutletConfig = Field(default_factory=LslOutletConfig)
+    json_tcp: JsonTcpConfig = Field(default_factory=JsonTcpConfig)
+    websocket: WebSocketConfig = Field(default_factory=WebSocketConfig)
     thinkgear: ThinkGearConfig = Field(default_factory=ThinkGearConfig)
 
 
