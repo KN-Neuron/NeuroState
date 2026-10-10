@@ -177,6 +177,7 @@ def run_mock(
     fs = config.sampling_rate_hz
     total = math.inf if duration_s is None else round(duration_s * fs)
     stop = stop or threading.Event()
+    drop_rng = np.random.default_rng(config.seed)
 
     t0 = local_clock()
     sent = 0
@@ -184,7 +185,9 @@ def run_mock(
         due = min(int((local_clock() - t0) * fs) + 1, total) - sent
         if due > 0:
             chunk = generator.generate(due).astype(np.float32)
-            # Timestamp from the sample count rather than the clock, so the stream has no jitter.
-            outlet.push_chunk(chunk, t0 + (sent + due - 1) / fs)
+            # Now and then the chunk is lost in transit, like a dropped Bluetooth packet.
+            if drop_rng.random() >= config.drops_per_min / 60 * due / fs:
+                # Timestamp from the sample count rather than the clock, so there is no jitter.
+                outlet.push_chunk(chunk, t0 + (sent + due - 1) / fs)
             sent += due
         stop.wait(_PUSH_INTERVAL_S)

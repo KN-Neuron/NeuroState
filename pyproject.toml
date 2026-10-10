@@ -19,6 +19,12 @@ dependencies = [
 [project.scripts]
 neurostate = "neurostate.cli:app"
 
+[project.optional-dependencies]
+gui = [
+    "pyqtgraph>=0.14.0",
+    "pyside6-essentials>=6.12.0",
+]
+
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]
 build-backend = "uv_build"

@@ -27,5 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0
-      - run: uv sync --locked
+      - name: Install the system libraries Qt needs
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0
+      - run: uv sync --locked --all-extras
       - run: uv run pytest

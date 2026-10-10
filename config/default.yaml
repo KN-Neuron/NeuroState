@@ -7,6 +7,7 @@
 input:
   stream_name: null           # LSL stream name to look for; null accepts any stream of stream_type
   stream_type: EEG
+  montage: standard-1020      # built-in montage name, or path to a montage YAML file
   no_signal_after_s: 2.0      # report no_signal after a gap in the data this long
 
 # Timing of the processing loop.
@@ -19,6 +20,12 @@ filters:
   highpass_hz: 1.0
   lowpass_hz: 45.0
   notch_hz: [50.0, 100.0]     # mains and its first harmonic; use [60.0, 120.0] in 60 Hz regions
+
+# Per-channel checks on the raw signal, over the last processing window.
+bad_channels:
+  flat_uv: 0.5                # 1-40 Hz RMS below this: no signal from the electrode
+  noisy_uv: 50.0              # 1-40 Hz RMS above this: poor contact or movement
+  mains_ratio: 1.0            # mains power above this many times the 1-40 Hz power
 
 artifacts:
   max_amplitude_uv: 100.0     # reject a window that goes beyond plus or minus this
@@ -58,4 +65,5 @@ mock:
   noise_uv: 1.0               # white sensor noise, independent on each channel
   line_noise_uv: 0.0          # mains hum
   line_hz: 50.0
+  drops_per_min: 0.0          # lose a chunk of samples in transit this often, to test gap detection
   seed: null                  # set to an integer for a reproducible signal

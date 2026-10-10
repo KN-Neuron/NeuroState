@@ -39,6 +39,7 @@ class InputConfig(_Section):
 
     stream_name: str | None = None
     stream_type: str = "EEG"
+    montage: str = "standard-1020"
     no_signal_after_s: PositiveFloat = 2.0
 
 
@@ -66,6 +67,14 @@ class FilterConfig(_Section):
         if self.highpass_hz >= self.lowpass_hz:
             raise ValueError("highpass_hz must be below lowpass_hz")
         return self
+
+
+class BadChannelConfig(_Section):
+    """Per-channel checks on the raw signal. RMS values are over 1-40 Hz."""
+
+    flat_uv: PositiveFloat = 0.5
+    noisy_uv: PositiveFloat = 50.0
+    mains_ratio: PositiveFloat = 1.0
 
 
 class ArtifactConfig(_Section):
@@ -128,6 +137,7 @@ class MockConfig(_Section):
     noise_uv: NonNegativeFloat = 1.0
     line_noise_uv: NonNegativeFloat = 0.0
     line_hz: PositiveFloat = 50.0
+    drops_per_min: NonNegativeFloat = 0.0
     seed: int | None = None
 
     @model_validator(mode="after")
@@ -141,6 +151,7 @@ class Config(_Section):
     input: InputConfig = Field(default_factory=InputConfig)
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
     filters: FilterConfig = Field(default_factory=FilterConfig)
+    bad_channels: BadChannelConfig = Field(default_factory=BadChannelConfig)
     artifacts: ArtifactConfig = Field(default_factory=ArtifactConfig)
     bands: BandsConfig = Field(default_factory=BandsConfig)
     scaling: ScalingConfig = Field(default_factory=ScalingConfig)

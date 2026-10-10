@@ -1,0 +1,7 @@
+# Any cap that uses standard 10-20 labels. EEG channels are picked by the channel types the
+# stream reports, and regions by the usual electrode names.
+name: Standard 10-20
+regions:
+  frontal: [Fz, F3, F4]
+  parietal: [Pz, P3, P4]
+  occipital: [O1, Oz, O2]
