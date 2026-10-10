@@ -1,0 +1,61 @@
+# neurostate configuration.
+#
+# Every value below is also the built-in default, so a custom config file only needs the keys
+# it changes. Use one with: neurostate --config <file> <command>
+
+# The EEG stream to read.
+input:
+  stream_name: null           # LSL stream name to look for; null accepts any stream of stream_type
+  stream_type: EEG
+  no_signal_after_s: 2.0      # report no_signal after a gap in the data this long
+
+# Timing of the processing loop.
+processing:
+  pull_interval_s: 0.05       # how often new samples are pulled from the stream
+  window_s: 2.0               # length of the sliding window behind each update
+  step_s: 0.25                # how often features are recomputed
+
+filters:
+  highpass_hz: 1.0
+  lowpass_hz: 45.0
+  notch_hz: [50.0, 100.0]     # mains and its first harmonic; use [60.0, 120.0] in 60 Hz regions
+
+artifacts:
+  max_amplitude_uv: 100.0     # reject a window that goes beyond plus or minus this
+
+# Frequency bands in Hz, as [low, high].
+bands:
+  delta: [1.0, 4.0]
+  theta: [4.0, 8.0]
+  alpha: [8.0, 13.0]
+  beta: [13.0, 25.0]          # stops at 25 Hz on purpose: higher frequencies carry more muscle noise
+
+scaling:
+  smoothing_s: 3.0            # time constant of the exponential moving average
+
+outputs:
+  rate_hz: 4.0
+  lsl:
+    name: NeuroState
+    type: BrainState
+  thinkgear:
+    host: 127.0.0.1
+    port: 13854
+
+# Fake EEG stream sent by `neurostate mock`. Amplitudes are in µV RMS on the channels where each
+# signal is strongest.
+mock:
+  stream_name: MockEEG
+  sampling_rate_hz: 250.0
+  channels: [Fp1, Fp2, AF3, AF4, F7, F3, Fz, F4, F8, FC5, FC1, FC2, FC6, T7, C3, Cz,
+             C4, T8, CP5, CP1, CP2, CP6, P7, P3, Pz, P4, P8, PO3, PO4, O1, Oz, O2]
+  background_uv: 10.0         # 1/f background activity, independent on each channel
+  alpha_uv: 10.0              # alpha rhythm, strongest over the back of the head
+  alpha_hz: 10.0
+  beta_uv: 3.0                # beta rhythm (14-24 Hz), strongest over the front and centre
+  blinks_per_min: 0.0
+  blink_uv: 150.0             # peak of a blink at Fp1/Fp2; it fades towards the back
+  noise_uv: 1.0               # white sensor noise, independent on each channel
+  line_noise_uv: 0.0          # mains hum
+  line_hz: 50.0
+  seed: null                  # set to an integer for a reproducible signal
